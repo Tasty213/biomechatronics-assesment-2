@@ -1,0 +1,2 @@
+clear();
+data = Data;

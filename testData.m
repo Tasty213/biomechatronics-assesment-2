@@ -12,7 +12,7 @@ classdef testData < matlab.unittest.TestCase
         % Test methods
 
         function testLoad(testCase)
-            expected = [1610, 72];
+            expected = [49169, 78];
             data = Data;
             
             actual = size(data.IMU_data);
