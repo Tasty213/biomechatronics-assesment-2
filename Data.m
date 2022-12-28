@@ -37,32 +37,36 @@ classdef Data
                         obj.IMU_data{index}.(column) = NaN(size(obj.IMU_data{index}, 1), 1);
                     end
                 end
-                obj.IMU_data{index} = obj.slidingWindows(windowSize, interval, obj.IMU_data{index});
+                obj.IMU_data{index} = obj.slidingWindows(interval, obj.IMU_data{index});
             end
             obj.IMU_data = vertcat(obj.IMU_data{:});
         end
 
-        function output = slidingWindows(obj, windowSize, interval, data)
-            windows = { {@(x) movmax(x, obj.windowSize), "max"}; 
-                        {@(x) movmin(x, obj.windowSize),"min"}; 
-                        {@(x) movmean(x, obj.windowSize),"mean"}; 
-                        {@(x) movstd(x, obj.windowSize),"std"};
+        function output = slidingWindows(obj, interval, data)
+            windows = { {@max, "max"}; 
+                        {@min, "min"}; 
+                        {@mean,"mean"}; 
+                        {@std, "std"}; 
+                        {@rms, "rms"}; 
+                        {@zerocrossings, "zcs"}; 
+                        {@maxgradient, "mgd"};
                       };
-            output = {};
+            output = cell(length(windows), 1);
             for index = 1:length(windows)
-                output{index} = obj.slidingWindow(windows{index}, data);
+                output{index} = obj.slidingWindow(windows{index}, data, interval);
             end
             output = horzcat(output{:});
-            output.Time = data.Time;
-            output.action = data.action;
-            output = output(1:interval:end, :);   
+            %output.Time = data.Time;
+            output.action(:,1) = convertCharsToStrings(data.action{1});  
         end
 
-        function output = slidingWindow(obj, func, data)
+        function output = slidingWindow(obj, func, data, interval)    
+            func{1} = @(x) movcustom(x, obj.windowSize, interval, func{1});
+            
             output = varfun(func{1}, data, "InputVariables", @isnumeric);
             newNames = append(func{2},string(output.Properties.VariableNames));
-            output = renamevars(output,output.Properties.VariableNames,newNames);
-            output = removevars(output, append(func{2},"Fun_Time"));
+            output  = renamevars(output ,output.Properties.VariableNames,newNames);
+            output  = removevars(output , append(func{2},"Fun_Time"));
         end
     end
 
